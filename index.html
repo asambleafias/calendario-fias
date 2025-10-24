@@ -7,31 +7,28 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Tus estilos CSS permanecen igual */
         :root {
-            /* Modo claro - Rojo/Burdeo como principales */
-            --color-primario: #C22533;      /* Rojo principal */
-            --color-secundario: #742345;    /* Burdeo secundario */
-            --color-terciario: #087049;     /* Verde oscuro */
-            --color-accento: #90C6BE;       /* Verde claro acento */
-            
+            --color-primario: #C22533;
+            --color-secundario: #742345;
+            --color-terciario: #087049;
+            --color-accento: #90C6BE;
             --color-texto: #333333;
-            --color-fondo: #f8f5f5;         /* Fondo ligeramente cálido */
+            --color-fondo: #f8f5f5;
             --color-tarjeta: #ffffff;
-            --color-borde: #e6d2d5;         /* Borde rojo muy suave */
-            --color-domingo: #fbe9eb;       /* Fondo domingo - rojo muy claro */
-            --color-hoy: #f3e5e6;           /* Fondo hoy - rojo claro */
-            --color-evento-multidias: #e6f0ed; /* Verde muy claro para eventos multidía */
+            --color-borde: #e6d2d5;
+            --color-domingo: #fbe9eb;
+            --color-hoy: #f3e5e6;
+            --color-evento-multidias: #e6f0ed;
         }
 
         [data-tema="oscuro"] {
-            /* Modo oscuro - manteniendo la misma paleta pero más oscura */
-            --color-primario: #D64D5A;      /* Rojo más brillante para contraste */
-            --color-secundario: #8C2A55;    /* Burdeo más intenso */
-            --color-terciario: #0B8A5C;     /* Verde más brillante */
-            --color-accento: #9ED6CE;       /* Verde acento más claro */
-            
+            --color-primario: #D64D5A;
+            --color-secundario: #8C2A55;
+            --color-terciario: #0B8A5C;
+            --color-accento: #9ED6CE;
             --color-texto: #f0e6e6;
-            --color-fondo: #1a1415;         /* Fondo oscuro con tono rojizu */
+            --color-fondo: #1a1415;
             --color-tarjeta: #251d1f;
             --color-borde: #4a3a3d;
             --color-domingo: #3d2629;
@@ -86,10 +83,10 @@
 
         .calendario {
             display: grid;
-            grid-template-columns: repeat(7, minmax(100px, 1fr)); /* cada columna mínimo 100px */
+            grid-template-columns: repeat(7, minmax(100px, 1fr));
             gap: 8px;
             position: relative;
-            overflow-x: auto;   /* habilita scroll horizontal */
+            overflow-x: auto;
         }
 
         .calendario::-webkit-scrollbar {
@@ -483,9 +480,10 @@
             configurarScrollTop();
         });
 
-        // Función para formatear fechas
+        // Función para formatear fechas - CORREGIDA
         function formatearFecha(fechaStr) {
-            const fecha = new Date(fechaStr);
+            // Corregir el problema de zona horaria
+            const fecha = new Date(fechaStr + 'T00:00:00');
             return fecha.toLocaleDateString('es-ES', {
                 weekday: 'long',
                 year: 'numeric',
@@ -494,10 +492,11 @@
             });
         }
 
-        // Función para formatear rango de fechas
+        // Función para formatear rango de fechas - CORREGIDA
         function formatearRangoFechas(inicioStr, finStr) {
-            const inicio = new Date(inicioStr);
-            const fin = new Date(finStr);
+            // Corregir el problema de zona horaria
+            const inicio = new Date(inicioStr + 'T00:00:00');
+            const fin = new Date(finStr + 'T00:00:00');
             
             if (inicio.getMonth() === fin.getMonth()) {
                 return `Del ${inicio.getDate()} al ${fin.getDate()} de ${inicio.toLocaleDateString('es-ES', { month: 'long' })}`;
@@ -624,12 +623,13 @@
                     diaNumero.textContent = i;
                     diaDiv.appendChild(diaNumero);
                     
-                    // Añadir actividades para este día
+                    // Añadir actividades para este día - CORREGIDO
                     const fechaStr = `${año}-${mesNum.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
                     const actividadesDia = actividades.filter(a => {
-                        const fechaInicio = new Date(a.fecha);
-                        const fechaFin = a.fechaFin ? new Date(a.fechaFin) : new Date(a.fecha);
-                        const fechaActual = new Date(fechaStr);
+                        // Corregir problema de zona horaria
+                        const fechaInicio = new Date(a.fecha + 'T00:00:00');
+                        const fechaFin = a.fechaFin ? new Date(a.fechaFin + 'T00:00:00') : new Date(a.fecha + 'T00:00:00');
+                        const fechaActual = new Date(fechaStr + 'T00:00:00');
                         
                         return fechaActual >= fechaInicio && fechaActual <= fechaFin;
                     });
@@ -643,8 +643,8 @@
                         
                         // Marcar como día de evento multidía
                         actividadesDia.forEach(actividad => {
-                            const fechaInicio = new Date(actividad.fecha);
-                            const fechaFin = actividad.fechaFin ? new Date(actividad.fechaFin) : new Date(actividad.fecha);
+                            const fechaInicio = new Date(actividad.fecha + 'T00:00:00');
+                            const fechaFin = actividad.fechaFin ? new Date(actividad.fechaFin + 'T00:00:00') : new Date(actividad.fecha + 'T00:00:00');
                             
                             if (fechaInicio.getTime() !== fechaFin.getTime()) {
                                 diaDiv.classList.add('evento-multidias');
@@ -681,6 +681,137 @@
                 document.getElementById(`mes-${mesesNumeros[0]}`).scrollIntoView({ behavior: 'smooth' });
             }
         }
+
+        // Función para crear conectores visuales entre días de eventos multidía
+        function crearConectoresEventosMultidia() {
+            actividades.forEach(actividad => {
+                if (actividad.fechaFin && actividad.fechaFin !== actividad.fecha) {
+                    const fechaInicio = new Date(actividad.fecha + 'T00:00:00');
+                    const fechaFin = new Date(actividad.fechaFin + 'T00:00:00');
+                    
+                    // Solo si el evento abarca múltiples días
+                    if (fechaInicio.getTime() !== fechaFin.getTime()) {
+                        const mesInicio = fechaInicio.getMonth() + 1;
+                        const mesFin = fechaFin.getMonth() + 1;
+                        
+                        // Para cada mes que abarque el evento
+                        for (let mes = mesInicio; mes <= mesFin; mes++) {
+                            const primerDiaMes = new Date(2025, mes - 1, 1);
+                            const ultimoDiaMes = new Date(2025, mes, 0);
+                            
+                            const inicio = mes === mesInicio ? fechaInicio.getDate() : 1;
+                            const fin = mes === mesFin ? fechaFin.getDate() : ultimoDiaMes.getDate();
+                            
+                            // Para cada día del evento en este mes
+                            for (let dia = inicio; dia <= fin; dia++) {
+                                const elementoDia = document.getElementById(`dia-2025-${mes}-${dia}`);
+                                if (elementoDia) {
+                                    // Ya marcamos el día con evento-multidias en la función anterior
+                                }
+                            }
+                            
+                            // Crear conectores visuales entre días consecutivos
+                            if (inicio < fin) {
+                                for (let dia = inicio; dia < fin; dia++) {
+                                    const diaActual = document.getElementById(`dia-2025-${mes}-${dia}`);
+                                    const diaSiguiente = document.getElementById(`dia-2025-${mes}-${dia+1}`);
+                                    
+                                    if (diaActual && diaSiguiente) {
+                                        // Verificar si están en la misma fila (días consecutivos)
+                                        const rectActual = diaActual.getBoundingClientRect();
+                                        const rectSiguiente = diaSiguiente.getBoundingClientRect();
+                                        
+                                        if (Math.abs(rectSiguiente.top - rectActual.top) < 5) { // Están en la misma fila
+                                            const contenedor = diaActual.closest('.mes-container');
+                                            const conector = document.createElement('div');
+                                            conector.className = 'evento-multidias-marcador';
+                                            conector.style.top = (rectActual.top + rectActual.height - 2) + 'px';
+                                            conector.style.left = (rectActual.right - 4) + 'px';
+                                            conector.style.width = (rectSiguiente.left - rectActual.right + 8) + 'px';
+                                            
+                                            contenedor.appendChild(conector);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función para mostrar detalles de actividad en modal - CORREGIDA
+        function mostrarDetallesActividad(actividad) {
+            document.getElementById('modalTitulo').textContent = actividad.titulo;
+            
+            const fechaElement = document.getElementById('modalFecha');
+            if (actividad.fechaFin && actividad.fechaFin !== actividad.fecha) {
+                fechaElement.innerHTML = `<span class="rango-fechas">${formatearRangoFechas(actividad.fecha, actividad.fechaFin)}</span><br>${formatearFecha(actividad.fecha)} - ${formatearFecha(actividad.fechaFin)}`;
+            } else {
+                fechaElement.textContent = formatearFecha(actividad.fecha);
+            }
+            
+            document.getElementById('modalUbicacion').textContent = actividad.ubicacion;
+            document.getElementById('modalDescripcion').innerHTML = actividad.descripcion;
+            
+            const categoriaSpan = document.getElementById('modalCategoria');
+            categoriaSpan.textContent = '';
+            const badge = document.createElement('span');
+            badge.className = 'categoria-badge';
+            badge.textContent = actividad.categoria;
+            categoriaSpan.appendChild(badge);
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalActividad'));
+            modal.show();
+        }
+
+        // Configurar el modo oscuro
+        function configurarModoOscuro() {
+            const toggleOscuro = document.getElementById('modoOscuro');
+            const body = document.body;
+            
+            // Comprobar preferencia del usuario
+            const prefiereOscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (prefiereOscuro) {
+                body.setAttribute('data-tema', 'oscuro');
+                toggleOscuro.checked = true;
+            }
+            
+            // Alternar modo oscuro al cambiar el toggle
+            toggleOscuro.addEventListener('change', function() {
+                if (this.checked) {
+                    body.setAttribute('data-tema', 'oscuro');
+                } else {
+                    body.removeAttribute('data-tema');
+                }
+            });
+        }
+
+        // Configurar el botón de scroll to top
+        function configurarScrollTop() {
+            const btnScrollTop = document.getElementById('btnScrollTop');
+            
+            // Mostrar u ocultar el botón según la posición de scroll
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    btnScrollTop.style.display = 'block';
+                } else {
+                    btnScrollTop.style.display = 'none';
+                }
+            });
+            
+            // Scroll suave al hacer clic en el botón
+            btnScrollTop.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    </script>
+</body>
+</html>
 
         // Función para crear conectores visuales entre días de eventos multidía
         function crearConectoresEventosMultidia() {
